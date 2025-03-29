@@ -1,0 +1,270 @@
+package com.ps.assignment.employeeManagement.controller;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.simple.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.client.RestTemplate;
+
+import com.ps.assignment.employeeManagement.dto.GenericResult;
+import com.ps.assignment.employeeManagement.dto.UserDto;
+import com.ps.assignment.employeeManagement.service.UserService;
+
+@ExtendWith(MockitoExtension.class)
+public class UserControllerTest {
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @InjectMocks
+    private UserController userController;
+
+    private JSONObject requestData;
+    private UserDto userDto;
+    private List<UserDto> userList;
+
+    @SuppressWarnings("unchecked")
+    @BeforeEach
+    public void setUp() {
+        requestData = new JSONObject();
+        requestData.put("name", "John");
+        requestData.put("ssn", "123-45-6789");
+        requestData.put("id", 1);
+
+        userDto = new UserDto();
+        userDto.setId(1L);
+        userDto.setFirstName("John");
+        userDto.setLastName("Doe");
+
+        userList = new ArrayList<>();
+        userList.add(userDto);
+    }
+
+    @Test
+    public void testDoInitialSetupSuccess() {
+        when(userService.doInitialSetup()).thenReturn(true);
+
+        GenericResult result = userController.doInitialSetup();
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("Users loaded successfully", result.getMessage());
+
+        verify(userService, times(1)).doInitialSetup();
+    }
+
+    @Test
+    public void testDoInitialSetupFailure() {
+        when(userService.doInitialSetup()).thenReturn(false);
+
+        GenericResult result = userController.doInitialSetup();
+        assertNotNull(result);
+        assertFalse(result.getSuccess());
+        assertEquals("FAILURE", result.getStatus());
+        assertEquals("Failed to load users", result.getMessage());
+
+        verify(userService, times(1)).doInitialSetup();
+    }
+
+    @Test
+    public void testSearchUsersAll() {
+        requestData.put("searchType", "All");
+        when(userService.findByFirstName(anyString())).thenReturn(userList);
+        when(userService.findByLastName(anyString())).thenReturn(userList);
+        when(userService.findBySsn(anyString())).thenReturn(userList);
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("Users found successfully", result.getMessage());
+        assertEquals(3 * userList.size(), result.getData().size()); // Expecting 3 times the userList size
+
+        verify(userService, times(1)).findByFirstName(anyString());
+        verify(userService, times(1)).findByLastName(anyString());
+        verify(userService, times(1)).findBySsn(anyString());
+    }
+
+    @Test
+    public void testSearchUsersByFirstName() {
+        requestData.put("searchType", "Fname");
+        when(userService.findByFirstName(anyString())).thenReturn(userList);
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("Users found successfully", result.getMessage());
+        assertEquals(userList, result.getData());
+
+        verify(userService, times(1)).findByFirstName(anyString());
+    }
+
+    @Test
+    public void testSearchUsersByLastName() {
+        requestData.put("searchType", "Lname");
+        when(userService.findByLastName(anyString())).thenReturn(userList);
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("Users found successfully", result.getMessage());
+        assertEquals(userList, result.getData());
+
+        verify(userService, times(1)).findByLastName(anyString());
+    }
+
+    @Test
+    public void testSearchUsersBySsn() {
+        requestData.put("searchType", "Ssn");
+        when(userService.findBySsn(anyString())).thenReturn(userList);
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("Users found successfully", result.getMessage());
+        assertEquals(userList, result.getData());
+
+        verify(userService, times(1)).findBySsn(anyString());
+    }
+
+    @Test
+    public void testSearchUsersNoType() {
+        when(userService.findAllUser()).thenReturn(userList);
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("Users found successfully", result.getMessage());
+        assertEquals(userList, result.getData());
+
+        verify(userService, times(1)).findAllUser();
+    }
+
+    @Test
+    public void testSearchUsersNotFound() {
+        requestData.put("searchType", "Fname");
+        when(userService.findByFirstName(anyString())).thenReturn(new ArrayList<>());
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("FAILURE", result.getStatus());
+        assertEquals("Failed to find users", result.getMessage());
+        assertNull(result.getData());
+
+        verify(userService, times(1)).findByFirstName(anyString());
+    }
+
+    @Test
+    public void testSearchUsersException() {
+        requestData.put("searchType", "Fname");
+        when(userService.findByFirstName(anyString())).thenThrow(new RuntimeException("Exception"));
+
+        GenericResult result = userController.searchUsers(requestData);
+        assertNotNull(result);
+        assertFalse(result.getSuccess());
+        assertEquals("FAILURE", result.getStatus());
+        assertEquals("Failed to find users", result.getMessage());
+        assertNull(result.getData());
+
+        verify(userService, times(1)).findByFirstName(anyString());
+    }
+
+    @Test
+    public void testFindUserByIdSuccess() {
+        when(userService.findUserById(anyInt())).thenReturn(userDto);
+
+        GenericResult result = userController.findUserById(requestData);
+        assertNotNull(result);
+        assertTrue(result.getSuccess());
+        assertEquals("SUCCESS", result.getStatus());
+        assertEquals("User found successfully", result.getMessage());
+        assertEquals(userDto, result.getData());
+
+        verify(userService, times(1)).findUserById(anyInt());
+    }
+
+    @Test
+    public void testFindUserByIdNotFound() {
+        when(userService.findUserById(anyInt())).thenReturn(null);
+
+        GenericResult result = userController.findUserById(requestData);
+        assertNotNull(result);
+        assertFalse(result.getSuccess());
+        assertEquals("FAILED", result.getStatus());
+        assertEquals("User not found", result.getMessage());
+        assertNull(result.getData());
+
+        verify(userService, times(1)).findUserById(anyInt());
+    }
+
+    @Test
+    public void testFindUserByIdException() {
+        when(userService.findUserById(anyInt())).thenThrow(new RuntimeException("Exception"));
+
+        GenericResult result = userController.findUserById(requestData);
+        assertNotNull(result);
+        assertFalse(result.getSuccess());
+        assertEquals("FAILURE", result.getStatus());
+        assertEquals("Failed to find user", result.getMessage());
+        assertNull(result.getData());
+
+        verify(userService, times(1)).findUserById(anyInt());
+    }
+
+    @Test
+    public void testFindUserByIdInvalidId() {
+        requestData.put("id", "invalid");
+
+        GenericResult result = userController.findUserById(requestData);
+        assertNotNull(result);
+        assertFalse(result.getSuccess());
+        assertEquals("FAILURE", result.getStatus());
+        assertEquals("Failed to find user", result.getMessage());
+        assertNull(result.getData());
+
+        verify(userService, never()).findUserById(anyInt());
+    }
+
+    @Test
+    public void testInitBinder() {
+        WebDataBinder binder = mock(WebDataBinder.class);
+        StringTrimmerEditor trimmer = new StringTrimmerEditor(true);
+        JSONObject obj = new JSONObject();
+        obj.put("key", "value");
+
+        when(binder.getTarget()).thenReturn(obj);
+
+        userController.initBinder(binder);
+
+        verify(binder, times(1)).registerCustomEditor(String.class, trimmer);
+    }
+}

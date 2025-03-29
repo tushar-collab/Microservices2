@@ -1,0 +1,184 @@
+package com.ps.assignment.employeeManagement.service.impl;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ps.assignment.employeeManagement.dto.UserDto;
+import com.ps.assignment.employeeManagement.model.Address;
+import com.ps.assignment.employeeManagement.model.Bank;
+import com.ps.assignment.employeeManagement.model.Company;
+import com.ps.assignment.employeeManagement.model.Coordinates;
+import com.ps.assignment.employeeManagement.model.Crypto;
+import com.ps.assignment.employeeManagement.model.Hair;
+import com.ps.assignment.employeeManagement.model.User;
+import com.ps.assignment.employeeManagement.repository.UserRepository;
+
+@ExtendWith(MockitoExtension.class)
+public class UserServiceImplTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private UserServiceImpl userService;
+
+    private User user;
+
+    @BeforeEach
+    public void setUp() {
+        user = new User();
+        user.setId(1L);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setMaidenName("Smith");
+        user.setEmail("john.doe@example.com");
+        user.setPhone("123-456-7890");
+        user.setAge(30);
+        user.setUniversity("University");
+        user.setUsername("johndoe");
+        user.setPassword("password");
+        user.setBirthDate("1990-01-01");
+        user.setImage("image.jpg");
+        user.setBloodGroup("O+");
+        user.setHeight(180.00);
+        user.setWeight(75.00);
+        user.setEyeColor("Blue");
+        user.setHair(new Hair("Brown", "Curly"));
+        user.setIp("192.168.1.1");
+        user.setMacAddress("00:1A:2B:3C:4D:5E");
+
+        Address address = new Address();
+        address.setAddress("123 Main St");
+        address.setCity("City");
+        address.setState("State");
+        address.setStateCode("ST");
+        address.setCountry("Country");
+        address.setPostalCode("12345");
+        Coordinates coordinates = new Coordinates();
+        coordinates.setLat("40.7128");
+        coordinates.setLng("-74.0060");
+        address.setCoordinates(coordinates);
+        user.setAddress(address);
+
+        Bank bank = new Bank();
+        bank.setCardExpire("12/23");
+        bank.setCardNumber("1234-5678-9012-3456");
+        bank.setCardType("Visa");
+        bank.setCurrency("USD");
+        bank.setIban("US12345678901234567890");
+        user.setBank(bank);
+
+        Company company = new Company();
+        company.setName("Company");
+        company.setDepartment("Department");
+        company.setTitle("Title");
+        Address companyAddress = new Address();
+        companyAddress.setAddress("456 Corporate Blvd");
+        companyAddress.setCity("Corporate City");
+        companyAddress.setState("Corporate State");
+        companyAddress.setStateCode("CS");
+        companyAddress.setCountry("Corporate Country");
+        companyAddress.setPostalCode("67890");
+        Coordinates companyCoordinates = new Coordinates();
+        companyCoordinates.setLat("37.7749");
+        companyCoordinates.setLng("-122.4194");
+        companyAddress.setCoordinates(companyCoordinates);
+        company.setAddress(companyAddress);
+        user.setCompany(company);
+
+        Crypto crypto = new Crypto();
+        crypto.setCoin("Bitcoin");
+        crypto.setWallet("Wallet123");
+        crypto.setNetwork("Network123");
+        user.setCrypto(crypto);
+
+        user.setEin("12-3456789");
+        user.setSsn("123-45-6789");
+        user.setUserAgent("Mozilla/5.0");
+        user.setRole("User");
+    }
+
+    @Test
+    public void testFindUserByIdSuccess() {
+        when(userRepository.findById(anyInt())).thenReturn(Optional.of(user));
+
+        UserDto result = userService.findUserById(1);
+        assertNotNull(result);
+        assertEquals("John", result.getFirstName());
+        assertEquals("Doe", result.getLastName());
+        assertEquals("Smith", result.getMaidenName());
+        assertEquals("john.doe@example.com", result.getEmail());
+        assertEquals("123-456-7890", result.getPhone());
+        assertEquals(30, result.getAge());
+        assertEquals("University", result.getUniversity());
+        assertEquals("johndoe", result.getUserName());
+        assertEquals("password", result.getPassword());
+        assertEquals("1990-01-01", result.getBirthDate());
+        assertEquals("image.jpg", result.getImage());
+        assertEquals("O+", result.getBloodGroup());
+        assertEquals(180, result.getHeight());
+        assertEquals(75, result.getWeight());
+        assertEquals("Blue", result.getEyeColor());
+        assertEquals("Brown", result.getHairColor());
+        assertEquals("Curly", result.getHairType());
+        assertEquals("192.168.1.1", result.getIp());
+        assertEquals("00:1A:2B:3C:4D:5E", result.getMacAddress());
+        assertEquals("123 Main St", result.getAddress());
+        assertEquals("City", result.getCity());
+        assertEquals("State", result.getState());
+        assertEquals("ST", result.getStateCode());
+        assertEquals("Country", result.getCountry());
+        assertEquals("12345", result.getPostalCode());
+        assertEquals(40.7128, result.getAddressLat());
+        assertEquals(-74.0060, result.getAddressLong());
+        assertEquals("12/23", result.getCardExpire());
+        assertEquals("1234-5678-9012-3456", result.getCardNumber());
+        assertEquals("Visa", result.getCardType());
+        assertEquals("USD", result.getCurrency());
+        assertEquals("US12345678901234567890", result.getIban());
+        assertEquals("Company", result.getCompanyName());
+        assertEquals("Department", result.getDepartment());
+        assertEquals("Title", result.getTitle());
+        assertEquals("456 Corporate Blvd", result.getCompanyAddress());
+        assertEquals("Corporate City", result.getCompanyCity());
+        assertEquals("Corporate State", result.getCompanyState());
+        assertEquals("CS", result.getCompanyStateCode());
+        assertEquals("Corporate Country", result.getCompanyCountry());
+        assertEquals("67890", result.getCompanyPostalCode());
+        assertEquals(37.7749, result.getCompanyAddressLat());
+        assertEquals(-122.4194, result.getCompanyAddressLong());
+        assertEquals("12-3456789", result.getEin());
+        assertEquals("123-45-6789", result.getSsn());
+        assertEquals("Mozilla/5.0", result.getUserAgent());
+        assertEquals("Bitcoin", result.getCoin());
+        assertEquals("Wallet123", result.getWallet());
+        assertEquals("Network123", result.getNetwork());
+        assertEquals("User", result.getRole());
+
+        verify(userRepository, times(1)).findById(anyInt());
+    }
+
+    @Test
+    public void testFindUserByIdNotFound() {
+        when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
+
+        UserDto result = userService.findUserById(1);
+        assertNull(result);
+
+        verify(userRepository, times(1)).findById(anyInt());
+    }
+}

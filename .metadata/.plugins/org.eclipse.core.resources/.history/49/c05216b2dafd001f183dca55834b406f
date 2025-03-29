@@ -1,0 +1,14 @@
+package com.ps.assignment.employeeManagement.aop;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+
+class AopUtilsTest {
+
+	@Test
+	void test() {
+		fail("Not yet implemented");
+	}
+
+}

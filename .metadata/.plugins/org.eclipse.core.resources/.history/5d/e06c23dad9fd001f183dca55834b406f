@@ -1,0 +1,210 @@
+package com.ps.assignment.employeeManagement.service.impl;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.ps.assignment.employeeManagement.config.ExternalApiCaller;
+import com.ps.assignment.employeeManagement.dto.UserDto;
+import com.ps.assignment.employeeManagement.helper.UserHelper;
+import com.ps.assignment.employeeManagement.model.User;
+import com.ps.assignment.employeeManagement.repository.UserRepository;
+
+@ExtendWith(MockitoExtension.class)
+public class UserServiceImplTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private UserHelper userHelper;
+
+    @Mock
+    private ExternalApiCaller externalApiCaller;
+
+    @InjectMocks
+    private UserServiceImpl userService;
+
+    private User user;
+    private UserDto userDto;
+    private List<UserDto> userList;
+    private JSONArray usersArray;
+
+    @BeforeEach
+    public void setUp() {
+        user = new User();
+        user.setId(1L);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+
+        userDto = new UserDto();
+        userDto.setId(1L);
+        userDto.setFirstName("John");
+        userDto.setLastName("Doe");
+
+        userList = new ArrayList<>();
+        userList.add(userDto);
+
+        usersArray = new JSONArray();
+        JSONObject jsonUser = new JSONObject();
+        jsonUser.put("email", "john.doe@example.com");
+        usersArray.put(jsonUser);
+    }
+
+    @Test
+    public void testGetDataFromExternalAPI() throws Exception {
+        when(externalApiCaller.callApi()).thenReturn("{\"key\":\"value\"}");
+
+        JSONObject result = userService.getDataFromExternalAPI();
+        assertNotNull(result);
+        assertEquals("value", result.getString("key"));
+
+        verify(externalApiCaller, times(1)).callApi();
+    }
+
+    @Test
+    public void testFallbackGetDataFromExternalAPI() {
+        JSONObject result = userService.fallbackGetDataFromExternalAPI(new RuntimeException("Exception"));
+        assertNotNull(result);
+        assertEquals("External API call failed", result.getString("error"));
+    }
+
+    @Test
+    public void testLoadUsersFromExternalAPI() {
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+        when(userHelper.findAndSaveCoordinates(any(JSONObject.class))).thenReturn(null);
+        when(userHelper.findAndSaveAddress(any(JSONObject.class), any())).thenReturn(null);
+        when(userHelper.findAndSaveCrypto(any(JSONObject.class))).thenReturn(null);
+        when(userHelper.findAndSaveHair(any(JSONObject.class))).thenReturn(null);
+        when(userHelper.findAndSaveBank(any(JSONObject.class))).thenReturn(null);
+        when(userHelper.findAndSaveCompany(any(JSONObject.class))).thenReturn(null);
+
+        Boolean status = userService.loadUsersFromExternalAPI(usersArray);
+        assertTrue(status);
+
+        verify(userRepository, times(1)).findByEmail(anyString());
+        verify(userHelper, times(1)).findAndSaveCoordinates(any(JSONObject.class));
+        verify(userHelper, times(1)).findAndSaveAddress(any(JSONObject.class), any());
+        verify(userHelper, times(1)).findAndSaveCrypto(any(JSONObject.class));
+        verify(userHelper, times(1)).findAndSaveHair(any(JSONObject.class));
+        verify(userHelper, times(1)).findAndSaveBank(any(JSONObject.class));
+        verify(userHelper, times(1)).findAndSaveCompany(any(JSONObject.class));
+        verify(userHelper, times(1)).createAndSaveUser(any(JSONObject.class), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void testFindAllUser() {
+        List<Object[]> result = new ArrayList<>();
+        result.add(new Object[] { 1L, "John", "Doe", null, null, null, null, null, null });
+        when(userRepository.fetchUsers()).thenReturn(result);
+
+        List<UserDto> users = userService.findAllUser();
+        assertNotNull(users);
+        assertEquals(1, users.size());
+        assertEquals("John", users.get(0).getFirstName());
+
+        verify(userRepository, times(1)).fetchUsers();
+    }
+
+    @Test
+    public void testFindByFirstName() {
+        List<Object[]> result = new ArrayList<>();
+        result.add(new Object[] { 1L, "John", "Doe", null, null, null, null, null, null });
+        when(userRepository.findUsersByFirstName(anyString())).thenReturn(Optional.of(result));
+
+        List<UserDto> users = userService.findByFirstName("John");
+        assertNotNull(users);
+        assertEquals(1, users.size());
+        assertEquals("John", users.get(0).getFirstName());
+
+        verify(userRepository, times(1)).findUsersByFirstName(anyString());
+    }
+
+    @Test
+    public void testFindByLastName() {
+        List<Object[]> result = new ArrayList<>();
+        result.add(new Object[] { 1L, "John", "Doe", null, null, null, null, null, null });
+        when(userRepository.findUsersByLastName(anyString())).thenReturn(Optional.of(result));
+
+        List<UserDto> users = userService.findByLastName("Doe");
+        assertNotNull(users);
+        assertEquals(1, users.size());
+        assertEquals("Doe", users.get(0).getLastName());
+
+        verify(userRepository, times(1)).findUsersByLastName(anyString());
+    }
+
+    @Test
+    public void testFindBySsn() {
+        List<Object[]> result = new ArrayList<>();
+        result.add(new Object[] { 1L, "John", "Doe", null, null, null, null, null, null });
+        when(userRepository.findUsersBySsn(anyString())).thenReturn(Optional.of(result));
+
+        List<UserDto> users = userService.findBySsn("123-45-6789");
+        assertNotNull(users);
+        assertEquals(1, users.size());
+        assertEquals("Doe", users.get(0).getLastName());
+
+        verify(userRepository, times(1)).findUsersBySsn(anyString());
+    }
+
+    @Test
+    public void testFindUserById() {
+        when(userRepository.findById(anyInt())).thenReturn(Optional.of(user));
+
+        UserDto result = userService.findUserById(1);
+        assertNotNull(result);
+        assertEquals("John", result.getFirstName());
+
+        verify(userRepository, times(1)).findById(anyInt());
+    }
+
+    @Test
+    public void testFindUserByIdNotFound() {
+        when(userRepository.findById(anyInt())).thenReturn(Optional.empty());
+
+        UserDto result = userService.findUserById(1);
+        assertNull(result);
+
+        verify(userRepository, times(1)).findById(anyInt());
+    }
+
+    @Test
+    public void testDoInitialSetup() throws Exception {
+        when(externalApiCaller.callApi()).thenReturn("{\"users\":[]}");
+        when(userService.loadUsersFromExternalAPI(any(JSONArray.class))).thenReturn(true);
+
+        Boolean status = userService.doInitialSetup();
+        assertTrue(status);
+
+        verify(externalApiCaller, times(1)).callApi();
+        verify(userService, times(1)).loadUsersFromExternalAPI(any(JSONArray.class));
+    }
+
+    @Test
+    public void testFallbackGetAllUsers() {
+        Boolean result = userService.fallbackGetAllUsers(new RuntimeException("Exception"));
+        assertFalse(result);
+    }
+}
