@@ -2,6 +2,7 @@
 <section name="Workbench">
 	<section name="MavenProjectImportWizardPage">
 		<list key="rootDirectory">
+			<item value="C:\Microservices\S9\gatewayserver"/>
 			<item value="C:\Microservices\loans"/>
 			<item value="C:\Microservices\cards"/>
 			<item value="C:\Microservices\accounts"/>
