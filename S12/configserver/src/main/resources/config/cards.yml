@@ -1,0 +1,12 @@
+build:
+  version: "3.0"
+
+cards: 
+  message: "Welcome  cards"
+  contactDetails:
+    email: "7Eo0f@example.com"
+    name: "Sachin"
+  onCallSupport: 
+    -(555) 555-1234
+    -(555) 555-4321
+    
