@@ -1,0 +1,3 @@
+VHOST: /
+QUEUE: send-communication.message
+INDEX: v2
